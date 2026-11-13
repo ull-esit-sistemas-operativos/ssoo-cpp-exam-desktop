@@ -17,9 +17,6 @@ extra = [
     "alarm.2",
     "setitimer.2",
     "sleep.3",
-    "pthread_create.3",
-    "pthread_cancel.3",
-    "pthread_join.3",
     "strerror.3",
 ]
 # Suite de Debian de la que se toman las páginas en inglés (paquetes manpages y
