@@ -1,0 +1,15 @@
+{
+    // La documentación no forma parte del código: fuera de búsquedas y vigilancia de archivos
+    "search.exclude": {
+        "cppreference/**": true,
+        "man/**": true
+    },
+    "files.watcherExclude": {
+        "**/cppreference/**": true,
+        "**/man/**": true
+    },
+    "C_Cpp.files.exclude": {
+        "**/cppreference": true,
+        "**/man": true
+    }
+}

@@ -1,0 +1,32 @@
+{
+    // --- IA desactivada ---
+    "chat.disableAIFeatures": true,
+    "chat.agent.enabled": false,
+    "C_Cpp.copilotHover": "disabled",
+
+    // --- Sin preguntas al abrir la carpeta (si no, entra en modo restringido) ---
+    "security.workspace.trust.enabled": false,
+
+    // --- Sin red: nada de actualizaciones, telemetría ni recomendaciones ---
+    "update.mode": "none",
+    "update.showReleaseNotes": false,
+    "extensions.autoUpdate": false,
+    "extensions.autoCheckUpdates": false,
+    "extensions.ignoreRecommendations": true,
+    "telemetry.telemetryLevel": "off",
+    "workbench.enableExperiments": false,
+    "workbench.startupEditor": "none",
+    "workbench.tips.enabled": false,
+    "workbench.welcomePage.walkthroughs.openOnInstall": false,
+    "workbench.secondarySideBar.defaultVisibility": "hidden",
+
+    // --- C++ ---
+    "C_Cpp.default.compilerPath": "@COMPILADOR@",
+    "C_Cpp.default.cppStandard": "@ESTANDAR@",
+    "C_Cpp.default.cStandard": "c17",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+
+    // --- Que no se pierda trabajo ---
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000
+}

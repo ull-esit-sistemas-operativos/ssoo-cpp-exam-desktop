@@ -1,0 +1,70 @@
+name: Construir paquete del examen
+
+on:
+  # Manual: Actions → «Construir paquete del examen» → Run workflow
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: Publicar el paquete como release
+        type: boolean
+        default: true
+  # Una etiqueta v* (p. ej. v2026-11) construye y publica esa versión
+  push:
+    tags: ["v*"]
+    branches: [main]
+    paths-ignore: ["**.md"]
+
+permissions:
+  contents: write
+
+jobs:
+  construir:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependencias del sistema
+        run: sudo apt-get update -q && sudo apt-get install -y -q mandoc libarchive-tools
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Caché de descargas
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: descargas-${{ hashFiles('config.toml') }}
+          restore-keys: descargas-
+
+      - name: Construir
+        env:
+          # Token de solo lectura del repo de apuntes (privado)
+          APUNTES_TOKEN: ${{ secrets.APUNTES_TOKEN }}
+        run: uv run construir
+
+      - name: Guardar como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: examen-cpp
+          path: dist/*.tar.gz
+          retention-days: 14
+
+      - name: Publicar release
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publicar)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            etiqueta="${GITHUB_REF_NAME}"
+          else
+            etiqueta="examen-$(date +%Y-%m-%d)-${GITHUB_RUN_NUMBER}"
+          fi
+          tar -xzOf dist/examen-cpp-sin-vsix.tar.gz examen-cpp/datos/VERSION > VERSION.txt
+          {
+            echo "Descarga \`examen-cpp.tar.gz\` (funciona sin red) o \`examen-cpp-sin-vsix.tar.gz\`"
+            echo "(descarga la extensión C/C++ al preparar). Instrucciones en \`LEEME.md\` dentro del paquete."
+            echo
+            echo '```'
+            cat VERSION.txt
+            echo '```'
+          } > notas.md
+          gh release create "$etiqueta" dist/*.tar.gz --title "$etiqueta" --notes-file notas.md

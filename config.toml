@@ -1,0 +1,45 @@
+# Configuración de `uv run construir`.
+
+[apuntes]
+# Repositorio del libro de la práctica. Si es privado, en GitHub Actions hace falta
+# el secreto APUNTES_TOKEN (ver README.md).
+repo = "https://github.com/ull-esit-sistemas-operativos/ssoo-practica-backup.git"
+rama = "master"
+# Perfil de Quarto del que salen el PDF y la lista de páginas del manual.
+perfil = "_quarto-basico.yml"
+# PDF ya generado (está en el repo) que se copia en la carpeta del examen.
+pdf = "_output/unidades-1-3/practica-unidades-1-3.pdf"
+
+[manual]
+# Las páginas se descubren en los enlaces a manpages.debian.org de los .qmd del
+# perfil. Aquí se añaden otras que los alumnos pueden necesitar y el libro no enlaza.
+extra = [
+    "alarm.2",
+    "setitimer.2",
+    "sleep.3",
+    "pthread_create.3",
+    "pthread_cancel.3",
+    "pthread_join.3",
+    "strerror.3",
+]
+# Suite de Debian de la que se toman las páginas en inglés (paquetes manpages y
+# manpages-dev) y las traducciones de manpages.debian.org.
+suite = "testing"
+# Algunas páginas cambian de sección en las versiones recientes en inglés.
+renombradas_en = { "_exit.2" = "_exit.3" }
+
+[cppreference]
+# html-book oficial (fork mantenido de cppreference-doc). Si falla la descarga,
+# se busca el mismo libro empaquetado por openSUSE.
+url = "https://github.com/PeterFeicht/cppreference-doc/releases/download/v20250209/html-book-20250209.tar.xz"
+version = "20250209"
+respaldo_opensuse = "https://download.opensuse.org/tumbleweed/repo/oss/noarch/"
+
+[vscode]
+compilador = "/usr/bin/g++-15"
+estandar = "c++23"
+# Versión de ms-vscode.cpptools que se incluye como .vsix ("ultima" = última estable).
+cpptools = "ultima"
+
+[paquete]
+nombre = "examen-cpp"
