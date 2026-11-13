@@ -9,10 +9,10 @@ Pasos (todas las descargas se guardan en la caché, así que repetir es rápido)
 3. Manual: páginas en inglés de los paquetes de Debian (manpages, manpages-dev) y
    traducciones de manpages.debian.org, convertidas a HTML con mandoc.
 4. cppreference: html-book oficial, sin el script de analítica.
-5. Extensión C/C++ de VS Code (.vsix linux-x64) del Marketplace.
-6. Empaqueta todo con preparar.sh en dist/<nombre>.tar.gz y dist/<nombre>-sin-vsix.tar.gz.
+5. Empaqueta todo con preparar.sh en dist/<nombre>.tar.gz. La extensión C/C++ de
+   VS Code no va en el paquete: preparar.sh la instala desde el Marketplace.
 
-Uso:  uv run construir [--apuntes DIR] [--sin-vsix] [--refrescar]
+Uso:  uv run construir [--apuntes DIR] [--refrescar]
 """
 
 from __future__ import annotations
@@ -34,7 +34,6 @@ import tempfile
 import tomllib
 import urllib.error
 import urllib.request
-import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import NoReturn
@@ -45,7 +44,6 @@ RAIZ = Path(__file__).resolve().parent
 UA = "ssoo-cpp-exam-desktop (+https://github.com/ull-esit-sistemas-operativos/ssoo-cpp-exam-desktop)"
 DEBIAN = "https://deb.debian.org/debian"
 MANPAGES_DEBIAN = "https://manpages.debian.org"
-MARKETPLACE = "https://marketplace.visualstudio.com/_apis/public/gallery"
 
 
 # --- Utilidades -------------------------------------------------------------------
@@ -475,42 +473,7 @@ def cppreference_opensuse(cfg: dict, version: str, cache: Path, tmp: Path) -> No
     subprocess.run(["bsdtar", "-xf", rpm, "-C", tmp, "./usr/share/cppreference/doc/html"], check=True)
 
 
-# --- 5. Extensión C/C++ -----------------------------------------------------------
-
-def vsix_cpptools(version: str, cache: Path, refrescar: bool) -> tuple[Path, str]:
-    consulta = json.dumps({"filters": [{"criteria": [{"filterType": 7, "value": "ms-vscode.cpptools"}]}],
-                           "flags": 0x1 | 0x2 | 0x10}).encode()
-    try:
-        resp = json.loads(leer_url(f"{MARKETPLACE}/extensionquery", consulta, {
-            "Content-Type": "application/json",
-            "Accept": "application/json;api-version=7.2-preview.1"}))
-        versiones = resp["results"][0]["extensions"][0]["versions"]
-    except (urllib.error.URLError, KeyError, IndexError) as e:
-        error(f"no se pudo consultar el Marketplace: {e}")
-
-    def estable(v: dict) -> bool:
-        props = {p["key"]: p["value"] for p in v.get("properties", [])}
-        return props.get("Microsoft.VisualStudio.Code.PreRelease") != "true"
-
-    candidatas = [v for v in versiones if v.get("targetPlatform") == "linux-x64"
-                  and (v["version"] == version if version != "ultima" else estable(v))]
-    if not candidatas:
-        error(f"no hay cpptools {version} para linux-x64 en el Marketplace")
-    elegida = candidatas[0]["version"]
-    destino = cache / f"cpptools-{elegida}-linux-x64.vsix"
-    if not destino.exists() or refrescar:
-        info(f"Extensión C/C++ {elegida}: descargando")
-        url = (f"{MARKETPLACE}/publishers/ms-vscode/vsextensions/cpptools/{elegida}"
-               f"/vspackage?targetPlatform=linux-x64")
-        destino.parent.mkdir(parents=True, exist_ok=True)
-        destino.write_bytes(leer_url(url))
-    if not zipfile.is_zipfile(destino):
-        destino.unlink()
-        error("el .vsix descargado no es un zip válido")
-    return destino, elegida
-
-
-# --- 6. Empaquetado -------------------------------------------------------------------
+# --- 5. Empaquetado -------------------------------------------------------------------
 
 def copiar_plantilla(origen: Path, destino: Path, valores: dict[str, str]) -> None:
     for f in origen.rglob("*"):
@@ -527,12 +490,10 @@ def copiar_plantilla(origen: Path, destino: Path, valores: dict[str, str]) -> No
             shutil.copy2(f, d)
 
 
-def empaquetar(dir_paquete: Path, salida: Path, nombre: str, excluir: set[str]) -> Path:
+def empaquetar(dir_paquete: Path, salida: Path, nombre: str) -> Path:
     archivo = salida / f"{nombre}.tar.gz"
 
-    def filtro(ti: tarfile.TarInfo) -> tarfile.TarInfo | None:
-        if Path(ti.name).name in excluir:
-            return None
+    def filtro(ti: tarfile.TarInfo) -> tarfile.TarInfo:
         ti.uid = ti.gid = 0
         ti.uname = ti.gname = ""
         return ti
@@ -548,7 +509,6 @@ def main() -> None:
     ap.add_argument("--cache", type=Path, default=RAIZ / ".cache")
     ap.add_argument("--salida", type=Path, default=RAIZ / "dist")
     ap.add_argument("--apuntes", type=Path, help="usar una copia local del repo de apuntes en vez de clonarlo")
-    ap.add_argument("--sin-vsix", action="store_true", help="no descargar la extensión (solo el paquete sin .vsix)")
     ap.add_argument("--refrescar", action="store_true", help="volver a descargar todo aunque esté en la caché")
     args = ap.parse_args()
 
@@ -582,32 +542,21 @@ def main() -> None:
         man = generar_manual(lista, cfg["manual"], cache, datos / "docs" / "man", args.refrescar)
         cpp = cppreference(cfg["cppreference"], cache, datos / "docs" / "cppreference", args.refrescar)
 
-        version_ext = None
-        if not args.sin_vsix:
-            vsix, version_ext = vsix_cpptools(str(cfg["vscode"]["cpptools"]), cache, args.refrescar)
-            shutil.copy2(vsix, datos / "cpptools-linux-x64.vsix")
-
         hoy = dt.date.today().isoformat()
         (datos / "VERSION").write_text(
             f"Generado: {hoy}\n"
             f"Apuntes: {cfg['apuntes']['repo']} @ {commit} ({pdf.name})\n"
             f"Manual: {man['paginas']} páginas, {man['en_espanol']} en español (Debian {man['suite']})\n"
-            f"cppreference: {cpp['version']}\n"
-            f"cpptools: {version_ext or 'se descarga al preparar'}\n", encoding="utf-8")
+            f"cppreference: {cpp['version']}\n", encoding="utf-8")
 
         salida.mkdir(parents=True, exist_ok=True)
-        hechos = []
-        if version_ext:
-            hechos.append(empaquetar(paquete, salida, nombre, set()))
-        hechos.append(empaquetar(paquete, salida, f"{nombre}-sin-vsix", {"cpptools-linux-x64.vsix"}))
+        hecho = empaquetar(paquete, salida, nombre)
 
     print()
     print(f"Apuntes @ {commit} · {man['paginas']} páginas del manual "
-          f"({man['en_espanol']} en español) · cppreference {cpp['version']} · "
-          f"cpptools {version_ext or '—'}")
-    for h in hechos:
-        print(f"  {h.relative_to(Path.cwd()) if h.is_relative_to(Path.cwd()) else h}"
-              f"  ({h.stat().st_size / 2**20:.0f} MB)")
+          f"({man['en_espanol']} en español) · cppreference {cpp['version']}")
+    print(f"  {hecho.relative_to(Path.cwd()) if hecho.is_relative_to(Path.cwd()) else hecho}"
+          f"  ({hecho.stat().st_size / 2**20:.0f} MB)")
 
 
 if __name__ == "__main__":

@@ -4,11 +4,11 @@ Guía para trabajar en este repositorio con Claude Code.
 
 ## Qué es
 
-Un generador, no una aplicación: `construir.py` produce `dist/examen-cpp.tar.gz` (y la
-variante `-sin-vsix`), el paquete que los profesores descomprimen en las máquinas del
-examen para preparar las cuentas de los alumnos con `preparar.sh`. Las máquinas del
-examen son Ubuntu 24.04 **sin red**: todo lo que el alumno usa tiene que ir dentro del
-paquete.
+Un generador, no una aplicación: `construir.py` produce `dist/examen-cpp.tar.gz`, el
+paquete que los profesores descomprimen en las máquinas del examen para preparar las
+cuentas de los alumnos con `preparar.sh`. Las máquinas del examen son Ubuntu 24.04 **sin
+red** durante el examen: todo lo que el alumno usa tiene que ir dentro del paquete, salvo
+la extensión C/C++, que `preparar.sh` descarga del Marketplace (hay red al preparar).
 
 **Todo en español:** prosa, comentarios, mensajes de los scripts, nombres de funciones.
 
@@ -17,7 +17,6 @@ paquete.
 ```bash
 uv run construir                                  # construye en dist/ (caché en .cache/)
 uv run construir --apuntes ../ssoo-practica-backup  # sin clonar los apuntes
-uv run construir --sin-vsix                       # sin consultar el Marketplace
 uv run construir --refrescar                      # ignora la caché
 ```
 
@@ -29,7 +28,7 @@ de openSUSE de cppreference. Para probar `preparar.sh` hace falta VS Code (`code
 - `config.toml`: todo lo que cambia entre cursos. Cualquier valor nuevo va aquí, no
   escrito en el código.
 - `construir.py`: un solo módulo con un paso por sección (apuntes, páginas, manual,
-  cppreference, extensión, empaquetado). Cada descarga se cachea en `.cache/`.
+  cppreference, empaquetado). Cada descarga se cachea en `.cache/`.
 - `plantilla/`: lo que acaba en el paquete. En los `.sh`, `.json`, `.html` y `.md` se
   sustituyen `@COMPILADOR@`, `@ESTANDAR@` y `@PDF@`. `preparar.sh` y `LEEME.md` se colocan
   en la raíz del paquete; el resto queda en `datos/plantilla/`.
@@ -42,9 +41,8 @@ examen-cpp/
 ├── preparar.sh, LEEME.md
 └── datos/
     ├── VERSION                       # de dónde sale cada cosa
-    ├── cpptools-linux-x64.vsix       # no está en la variante -sin-vsix
     ├── docs/{cppreference,man}/
-    └── plantilla/{examen/,config/settings.json,policy.json}
+    └── plantilla/{examen/,config/settings.json}
 ```
 
 ## Decisiones que no hay que deshacer
@@ -65,13 +63,12 @@ examen-cpp/
 - **Nada de cppreference en español:** no existe versión offline y la wiki está desfasada.
 - **Firefox snap no lee fuera de `$HOME`**, por eso `preparar.sh` copia la documentación
   en cada cuenta en vez de enlazarla desde `/opt`.
-- **`preparar.sh` instala la extensión como el propio usuario** (`runuser`), del `.vsix`
-  si está o del Marketplace si no. No crees a mano `extensions.json`: VS Code exige el
+- **`preparar.sh` instala la extensión como el propio usuario** (`runuser`), siempre
+  del Marketplace: el paquete no lleva `.vsix`. No crees a mano `extensions.json`: VS Code exige el
   campo `location` y sin él ignora la extensión.
 - **Sin arranque automático de VS Code**: lo pidió el profesor. Solo hay lanzadores en el
   menú de aplicaciones.
-- `/etc/vscode/policy.json` (solo con `sudo`) es lo único que el alumno no puede cambiar;
-  `AllowedExtensions` va como cadena JSON, que es el formato que VS Code acepta en Linux.
+- **Sin política del sistema** (`/etc/vscode/policy.json`): no se necesita.
 
 ## Comprobar un cambio
 

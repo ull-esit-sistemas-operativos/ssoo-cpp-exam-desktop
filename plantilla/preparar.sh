@@ -7,14 +7,13 @@
 #        cppreference/             cppreference offline
 #        man/                      manual del sistema en HTML
 #        LEEME.html                índice de toda la documentación
-#   ~/.vscode/extensions/          extensión C/C++ (del .vsix sin red, o del Marketplace si no está)
+#   ~/.vscode/extensions/          extensión C/C++ del Marketplace (hace falta red al preparar)
 #   ~/.config/Code/User/settings.json   IA desactivada, @ESTANDAR@ con @COMPILADOR@, sin actualizaciones
 #   ~/.local/share/applications/   lanzadores "Examen C++" y "Documentación del examen"
 #
 # Uso:
 #   ./preparar.sh                         prepara la cuenta actual
-#   sudo ./preparar.sh alumno1 alumno2    prepara esas cuentas y además instala
-#                                         la política del sistema (/etc/vscode/policy.json)
+#   sudo ./preparar.sh alumno1 alumno2    prepara esas cuentas
 #   sudo ./preparar.sh                    con sudo y sin nombres: la cuenta que ejecutó sudo
 #   [sudo] ./preparar.sh --desinstalar [cuentas...]
 
@@ -90,7 +89,6 @@ preparar_cuenta() {
     fi
     cp "$DATOS/plantilla/config/settings.json" "$cfg/settings.json"
     chmod 644 "$cfg/settings.json"
-    chmod 644 "$cfg/settings.json"
 
     # Lanzadores en el menú de aplicaciones (con la ruta real del escritorio)
     mkdir -p "$home/.local/share/applications"
@@ -120,10 +118,10 @@ EOF
     chown -R "$u": "$ex" "$home/.config/Code" "$home/.local/share/applications"
     chown "$u": "$home/.config" "$home/.local" "$home/.local/share"
 
-    # Extensión C/C++, instalada como la propia cuenta: desde el .vsix si está,
-    # si no, desde el Marketplace (hace falta red solo durante la preparación)
-    info "[$u] Extensión C/C++ (desde ${EXTENSION##*/})"
-    como "$u" code --install-extension "$EXTENSION" --force 2>&1 \
+    # Extensión C/C++, instalada como la propia cuenta desde el Marketplace
+    # (hace falta red solo durante la preparación)
+    info "[$u] Extensión C/C++ (desde el Marketplace)"
+    como "$u" code --install-extension ms-vscode.cpptools --force 2>&1 \
         | grep -v -i -e deprecat -e trace-deprecation || true
     como "$u" code --list-extensions 2>/dev/null | grep -qx ms-vscode.cpptools \
         || error "[$u] la extensión no se ha instalado"
@@ -135,36 +133,10 @@ EOF
     done
 }
 
-# --- Política del sistema (solo con sudo): el alumno no puede cambiarla -----------
-# Solo permite la extensión C/C++; desactiva modo agente, MCP, telemetría y actualizaciones
-politica() {
-    mkdir -p /etc/vscode
-    if (( DESINSTALAR )); then
-        if [[ -f /etc/vscode/policy.json.antes-examen ]]; then
-            mv -f /etc/vscode/policy.json.antes-examen /etc/vscode/policy.json
-        else
-            rm -f /etc/vscode/policy.json
-        fi
-        return
-    fi
-    if [[ -f /etc/vscode/policy.json && ! -f /etc/vscode/policy.json.antes-examen ]] \
-       && ! cmp -s /etc/vscode/policy.json "$DATOS/plantilla/policy.json"; then
-        cp /etc/vscode/policy.json /etc/vscode/policy.json.antes-examen
-    fi
-    cp "$DATOS/plantilla/policy.json" /etc/vscode/policy.json
-    chmod 644 /etc/vscode/policy.json
-}
-
 # --- Programa principal ------------------------------------------------------------
 if (( ! DESINSTALAR )); then
     [[ -d "$DATOS/docs/cppreference" ]] \
         || error "no encuentro $DATOS (¿has movido preparar.sh fuera de su carpeta?)"
-    if [[ -f "$DATOS/cpptools-linux-x64.vsix" ]]; then
-        EXTENSION="$DATOS/cpptools-linux-x64.vsix"
-    else
-        EXTENSION=ms-vscode.cpptools
-        aviso "no está datos/cpptools-linux-x64.vsix: la extensión se descargará del Marketplace (hace falta red)"
-    fi
     command -v code >/dev/null || error "VS Code no está instalado (comando 'code')"
     [[ -x $COMPILADOR ]] || aviso "no existe $COMPILADOR: IntelliSense no encontrará las cabeceras"
 fi
@@ -181,13 +153,6 @@ for u in "${CUENTAS[@]}"; do
         preparar_cuenta "$u" "$home" "$desk"
     fi
 done
-
-if [[ $EUID -eq 0 ]]; then
-    info "Política del sistema de VS Code (/etc/vscode/policy.json)"
-    politica
-elif (( ! DESINSTALAR )); then
-    aviso "sin sudo no se instala /etc/vscode/policy.json (impide que el alumno añada extensiones)"
-fi
 
 if (( DESINSTALAR )); then info "Hecho."; exit 0; fi
 

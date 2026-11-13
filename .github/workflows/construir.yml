@@ -58,10 +58,10 @@ jobs:
           else
             etiqueta="examen-$(date +%Y-%m-%d)-${GITHUB_RUN_NUMBER}"
           fi
-          tar -xzOf dist/examen-cpp-sin-vsix.tar.gz examen-cpp/datos/VERSION > VERSION.txt
+          tar -xzOf dist/examen-cpp.tar.gz examen-cpp/datos/VERSION > VERSION.txt
           {
-            echo "Descarga \`examen-cpp.tar.gz\` (funciona sin red) o \`examen-cpp-sin-vsix.tar.gz\`"
-            echo "(descarga la extensión C/C++ al preparar). Instrucciones en \`LEEME.md\` dentro del paquete."
+            echo "Descarga \`examen-cpp.tar.gz\`. Hace falta red al preparar (la extensión C/C++"
+            echo "se descarga entonces). Instrucciones en \`LEEME.md\` dentro del paquete."
             echo
             echo '```'
             cat VERSION.txt

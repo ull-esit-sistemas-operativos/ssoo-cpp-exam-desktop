@@ -10,13 +10,10 @@
    sudo ./preparar.sh alumno1 alumno2 ...   # o todas las cuentas de una vez
    ```
 
-   `sudo` solo hace falta para dos cosas:
-   - preparar cuentas distintas de la tuya;
-   - instalar `/etc/vscode/policy.json`, que impide al alumno instalar otras
-     extensiones (Copilot incluida) o volver a activar el modo agente.
+   `sudo` solo hace falta para preparar cuentas distintas de la tuya.
 
-   Si falta `datos/cpptools-linux-x64.vsix` (paquete `-sin-vsix`), la extensión se
-   descarga del Marketplace: hace falta red durante la preparación, pero no después.
+   La extensión C/C++ se descarga del Marketplace: hace falta red durante la
+   preparación, pero no después.
 
 3. Prueba con una cuenta y **sin red**: abre «Examen C++ (VS Code)» desde el menú de
    aplicaciones. No debe preguntar nada e IntelliSense debe funcionar con @ESTANDAR@.

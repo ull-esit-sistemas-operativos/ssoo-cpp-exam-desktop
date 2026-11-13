@@ -35,8 +35,6 @@ respaldo_opensuse = "https://download.opensuse.org/tumbleweed/repo/oss/noarch/"
 [vscode]
 compilador = "/usr/bin/g++-15"
 estandar = "c++23"
-# Versión de ms-vscode.cpptools que se incluye como .vsix ("ultima" = última estable).
-cpptools = "ultima"
 
 [paquete]
 nombre = "examen-cpp"

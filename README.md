@@ -13,12 +13,9 @@ Cada cuenta preparada tiene en el escritorio una carpeta `examen/` con:
 
 ## Descargar el paquete
 
-Lo más fácil es bajarlo ya hecho de [Releases](../../releases):
-
-| Archivo | Cuándo usarlo |
-|---|---|
-| `examen-cpp.tar.gz` | la máquina no tiene red ni siquiera para prepararla |
-| `examen-cpp-sin-vsix.tar.gz` | hay red al preparar (la extensión se descarga entonces) |
+Lo más fácil es bajar `examen-cpp.tar.gz` ya hecho de [Releases](../../releases). La
+máquina necesita red al prepararla, porque la extensión C/C++ se descarga entonces del
+Marketplace; después el examen funciona sin conexión.
 
 Las instrucciones para preparar las cuentas están en el `LEEME.md` de dentro del paquete.
 En resumen:
@@ -51,14 +48,14 @@ Lo que hace, paso a paso:
 3. **Manual:** inglés de los paquetes `manpages` y `manpages-dev` de Debian; español de
    manpages.debian.org, las mismas páginas que enlaza el libro. Las convierte con `mandoc`.
 4. **cppreference:** el html-book oficial, sin el script de Google Analytics.
-5. **Extensión:** `ms-vscode.cpptools` para linux-x64 del Marketplace.
-6. **Empaquetado:** con `plantilla/` (incluye `preparar.sh`) en `dist/`.
+5. **Empaquetado:** con `plantilla/` (incluye `preparar.sh`) en `dist/`. La extensión
+   `ms-vscode.cpptools` no va en el paquete: `preparar.sh` la instala del Marketplace.
 
 ## Configuración
 
 Todo lo que cambia de un curso a otro está en [`config.toml`](config.toml): el repo y el
 PDF de los apuntes, páginas extra del manual, la versión de cppreference, el compilador,
-el estándar y la versión de la extensión.
+y el estándar.
 
 ## GitHub Actions
 

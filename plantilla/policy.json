@@ -1,8 +1,0 @@
-{
-    "AllowedExtensions": "{\"ms-vscode.cpptools\": true}",
-    "ChatAgentMode": false,
-    "ChatMCP": "none",
-    "TelemetryLevel": "off",
-    "UpdateMode": "none",
-    "ExtensionsAutoUpdate": false
-}
